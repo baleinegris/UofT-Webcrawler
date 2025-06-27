@@ -25,7 +25,7 @@ go.work
 go.work.sum
 
 #Python files
-/packages/text-embedding/.venv/*
+/packages/qdrant-interactor/.venv/*
 
 # Qdrant files
 /qdrant_storage

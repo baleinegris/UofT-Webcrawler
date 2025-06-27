@@ -24,6 +24,12 @@ profile.cov
 go.work
 go.work.sum
 
+#Python files
+/packages/text-embedding/.venv/*
+
+# Qdrant files
+/qdrant_storage
+
 # env file
 .env
 

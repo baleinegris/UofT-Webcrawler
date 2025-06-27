@@ -1,0 +1,35 @@
+# /your-project-root/docker-compose.yml
+version: '3.8'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant_db
+    ports:
+      - "6333:6333" # HTTP API
+      - "6334:6334" # gRPC API
+    volumes:
+      - qdrant_data:/qdrant/storage # This is the crucial line for persistence
+    restart: unless-stopped # Ensure Qdrant restarts if it crashes
+
+  text-embedding-service:
+    build:
+      context: ./packages/text-embedding # Build context for your Python service
+      dockerfile: Dockerfile            # Assuming you'll have a Dockerfile here
+    container_name: text_embedding_service
+    ports:
+      - "8000:8000" # Or 50051:50051 if using gRPC
+    depends_on:
+      - qdrant # Ensure Qdrant starts before the Python service
+    environment:
+      # Pass Qdrant host to your Python service
+      # 'qdrant' is the service name in docker-compose, which resolves to its IP
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333 # Or 6334 for gRPC
+    # Add rate limiting variables here if needed
+    # - EMBEDDING_CONCURRENCY=5
+
+# Define the named volume for Qdrant data
+volumes:
+  qdrant_data:
+    # driver: local # Default driver, explicitly stating it

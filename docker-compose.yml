@@ -9,20 +9,20 @@ services:
       - "6333:6333" # HTTP API
       - "6334:6334" # gRPC API
     volumes:
-      - qdrant_data:/qdrant/storage # This is the crucial line for persistence
+      - qdrant_data:/qdrant/storage # For persistent storage
     restart: unless-stopped # Ensure Qdrant restarts if it crashes
 
-  text-embedding-service:
+  qdrant-interactor:
     build:
-      context: ./packages/text-embedding # Build context for your Python service
+      context: ./packages/qdrant-interactor # Build context for your Python service
       dockerfile: Dockerfile            # Assuming you'll have a Dockerfile here
-    container_name: text_embedding_service
+    container_name: qdrant-interactor
     ports:
       - "8000:8000" # Or 50051:50051 if using gRPC
     depends_on:
       - qdrant # Ensure Qdrant starts before the Python service
     environment:
-      # Pass Qdrant host to your Python service
+      # Pass Qdrant host to the Python service
       # 'qdrant' is the service name in docker-compose, which resolves to its IP
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333 # Or 6334 for gRPC

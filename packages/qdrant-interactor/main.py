@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from schemas.TextEmbeddingRequest import TextEmbeddingRequest
-from embedding_agent import startInteractor, addDocument
+from schemas.QueryRequest import QueryRequest
+from schemas.QueryResponse import QueryResponse
+from embedding_agent import startInteractor, addDocument, queryDatabase
 
 app = FastAPI()
 
@@ -12,6 +14,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def on_startup():
+    startInteractor(collection_name="test_collection")
 
 @app.post("/add_embedding")
 async def add_embedding(request: TextEmbeddingRequest):
@@ -24,9 +30,19 @@ async def add_embedding(request: TextEmbeddingRequest):
     else:
         return {"message": "Failed to add document."}
 
-
+@app.get("/query")
+async def query(request: QueryRequest) -> QueryResponse:
+    """
+    Given a query string, this endpoint retrieves relevant documents from the Qdrant database.
+    """
+    results: QueryResponse = queryDatabase(
+        query=request.query,
+        collection_name=request.collection_name,
+        limit=request.limit
+    )
+    return results
 
 if __name__ == "__main__":
     import uvicorn
     startInteractor(collection_name="test_collection")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

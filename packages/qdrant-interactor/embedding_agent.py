@@ -1,4 +1,6 @@
 from qdrant_client import QdrantClient, models
+from schemas.QueryResponse import QueryResponse, QueryResult
+import os
 import uuid
 
 client = None
@@ -7,11 +9,13 @@ def startInteractor(collection_name: str, model="BAAI/bge-small-en") -> bool:
     """
     Starts the Qdrant interactor service for given collection name.
     """
+    qdrant_host = os.environ.get("QDRANT_HOST", "localhost")
+    qdrant_port = os.environ.get("QDRANT_PORT", "6333")
     global client
     if client is not None:
-        print("Qdrant interactor is already running.")
+        print("Qdrant interactor is already running!")
         return True
-    client = QdrantClient(url="http://localhost:6333")
+    client = QdrantClient(url=f"http://{qdrant_host}:{qdrant_port}")
     if client.collection_exists(collection_name):
         print(f"Collection {collection_name} exists.")
         return True
@@ -59,3 +63,32 @@ def addDocument(content: str, source: str, collection_name: str, model="BAAI/bge
     except Exception as e:
         print(f"Failed to add document to collection {collection_name}: {e}")
         return False
+
+def queryDatabase(query: str, collection_name: str, limit: int = 10, model="BAAI/bge-small-en") -> QueryResponse:
+    """
+    Queries the specified collection and returns a QueryResponse object with results.
+    """
+    global client
+    if client is None:
+        print("Qdrant interactor is not running. Please start it first.")
+        return QueryResponse(results=[])
+    try:
+        results = client.query_points(
+            collection_name=collection_name,
+            query=models.Document(
+                text=query,
+                model=model
+            )
+        ).points
+        query_results = []
+        for result in results:
+            query_results.append(QueryResult(
+                id=str(result.id),
+                content=result.payload.get("content") or "",
+                source=result.payload.get("source") or "",
+                score=result.score or 0.0
+            ))
+        return QueryResponse(results=query_results)
+    except Exception as e:
+        print(f"Failed to query collection {collection_name}: {e}")
+        return QueryResponse(results=[])

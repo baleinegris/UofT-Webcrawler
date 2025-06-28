@@ -13,6 +13,7 @@ services:
     restart: unless-stopped # Ensure Qdrant restarts if it crashes
 
   qdrant-interactor:
+    image: qdrant-interactor:latest
     build:
       context: ./packages/qdrant-interactor # Build context for your Python service
       dockerfile: Dockerfile            # Assuming you'll have a Dockerfile here
@@ -29,6 +30,14 @@ services:
     # Add rate limiting variables here if needed
     # - EMBEDDING_CONCURRENCY=5
 
+  web-crawler:
+    build:
+      context: ./packages/web-crawler
+      dockerfile: Dockerfile
+    environment:
+      - STARTING_URL=https://web.cs.toronto.edu/people/faculty-directory
+      - CRAWL_DEPTH=10
+  
 # Define the named volume for Qdrant data
 volumes:
   qdrant_data:

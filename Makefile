@@ -7,6 +7,11 @@ dev-start-qdrant-interactor:
 	cd packages/qdrant-interactor && \
 		python main.py
 
+dev-start-webcrawler:
+	@echo "Starting web crawler development environment..."
+	cd packages/web-crawler && \
+		go run main.go
+
 build-qdrant-interactor:
 	@echo "Building Qdrant Interactor..."
 	docker compose build --no-cache qdrant-interactor

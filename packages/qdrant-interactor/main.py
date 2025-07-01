@@ -24,7 +24,7 @@ async def add_embedding(request: TextEmbeddingRequest):
     """
     Given a text, url, and position, this endpoint creates an embedding for the text and adds it to the Qdrant database.
     """
-    status = addDocument(content=request.content, source=request.url, collection_name="test_collection")
+    status = addDocument(content=request.content, source=request.url, collection_name=request.collection_name)
     if status is True:
         return {"message": "Document added successfully."}
     else:

@@ -42,6 +42,15 @@ def addDocument(content: str, source: str, collection_name: str, model="BAAI/bge
     if client is None:
         print("Qdrant interactor is not running. Please start it first.")
         return False
+    if not client.collection_exists(collection_name):
+        print(f"Collection {collection_name} does not exist. Please create it first.")
+        client.create_collection(
+            collection_name=collection_name,
+            vectors_config=models.VectorParams(
+                size=client.get_embedding_size(model),
+                distance=models.Distance.COSINE
+            )
+        )
     try:
         id = str(uuid.uuid4())
         payload = {

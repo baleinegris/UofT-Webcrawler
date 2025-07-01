@@ -7,7 +7,7 @@ dev-start-qdrant-interactor:
 	cd packages/qdrant-interactor && \
 		python main.py
 
-dev-start-webcrawler:
+dev-crawl:
 	@echo "Starting web crawler development environment..."
 	cd packages/web-crawler && \
 		go run main.go

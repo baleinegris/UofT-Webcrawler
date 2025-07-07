@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -23,38 +25,38 @@ var OverlapLength = 100
 var (
 	fullDocumentText string // Accumulate all text here
 	allTextChunks    []PageChunk
-	isSyllabusPage   bool
 )
 
 func main() {
 	links := 0
 	c := colly.NewCollector(
-		colly.MaxDepth(4),
+		colly.MaxDepth(2),
 		colly.Async(true),
-	)
+		colly.URLFilters(
+			regexp.MustCompile(`^https?://([a-z0-9-]+\.)?(cs\.toronto\.edu|cs\.utoronto\.edu)/.*$`),
+		))
 	c.AllowURLRevisit = false
 	c.OnHTML("body", func(e *colly.HTMLElement) {
-		response := e.Response
-		fullDocumentText = ""                 // Reset for each page
-		isSyllabusPage = isSyllabus(response) // Set flag
-		if isSyllabusPage {
-			fmt.Println("Syllabus page detected:", response.Request.URL.String())
-			traverseDOMForFullText(e.DOM) // Extract all text from the page
-		}
+		fullDocumentText = ""         // Reset for each page
+		traverseDOMForFullText(e.DOM) // Extract all text from the page
 	})
 
 	c.OnScraped(func(r *colly.Response) {
-		if isSyllabusPage && fullDocumentText != "" {
-			chunkTextByLength(fullDocumentText, r.Request.URL.String()) // Pass URL for tracking
-			fmt.Printf("Chunked syllabus: %s - created %d chunks\n",
-				r.Request.URL.String(), len(allTextChunks))
-		}
+		chunkTextByLength(fullDocumentText, r.Request.URL.String()) // Pass URL for tracking
+		fmt.Printf("Chunked syllabus: %s - created %d chunks\n",
+			r.Request.URL.String(), len(allTextChunks))
 	})
 
 	c.OnHTML("a[href]", handleLink)
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting:", r.URL.String())
 		links++
+	})
+
+	c.Limit(&colly.LimitRule{
+		DomainGlob:  "*cs.toronto.edu",
+		Parallelism: 1,
+		Delay:       1 * time.Second,
 	})
 	c.Visit("https://web.cs.toronto.edu/people/faculty-directory")
 	c.Wait()
@@ -68,14 +70,45 @@ func main() {
 		fmt.Printf("Error saving chunks: %v\n", err)
 	}
 
-}
+	fmt.Printf("Sending %d chunks to vector database...\n", len(allTextChunks))
+	successCount := 0
 
-func isSyllabus(r *colly.Response) bool {
-	content := string(r.Body)
-	if strings.Contains(content, "syllabus") || strings.Contains(content, "course outline") || strings.Contains(content, "course description") {
-		return true
+	for i, chunk := range allTextChunks {
+		// Create a proper JSON payload
+		payload := map[string]interface{}{
+			"content":         chunk.Content,
+			"url":             chunk.URL,
+			"position":        i,
+			"collection_name": "website_chunks", // Add the required collection_name field
+		}
+
+		jsonData, err := json.Marshal(payload)
+		if err != nil {
+			fmt.Printf("Error marshaling chunk %d: %v\n", i, err)
+			continue
+		}
+
+		resp, err := http.Post("http://localhost:8000/add_embedding", "application/json", strings.NewReader(string(jsonData)))
+		if err != nil {
+			fmt.Printf("Error sending chunk %d to server: %v\n", i, err)
+			continue
+		}
+
+		// Check response status
+		if resp.StatusCode != 200 {
+			fmt.Printf("Server returned error for chunk %d: Status %d\n", i, resp.StatusCode)
+		} else {
+			successCount++
+		}
+
+		resp.Body.Close()
+
+		// Add delay or server will be overwhelmed
+		time.Sleep(100 * time.Millisecond)
 	}
-	return false
+
+	fmt.Printf("Successfully sent %d out of %d chunks to vector database\n", successCount, len(allTextChunks))
+
 }
 
 func handleLink(e *colly.HTMLElement) {

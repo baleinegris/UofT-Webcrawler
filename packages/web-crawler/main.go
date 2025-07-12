@@ -74,7 +74,6 @@ func main() {
 	successCount := 0
 
 	for i, chunk := range allTextChunks {
-		// Create a proper JSON payload
 		payload := map[string]interface{}{
 			"content":         chunk.Content,
 			"url":             chunk.URL,

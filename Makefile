@@ -29,3 +29,22 @@ destroy-qdrant-interactor:
 	@echo "Removing Qdrant Interactor image..."
 	IMAGE=$$(docker images --format '{{.Repository}}:{{.Tag}}' | grep qdrant-interactor || true); \
 	if [ -n "$$IMAGE" ]; then docker rmi $$IMAGE; else echo "No qdrant-interactor image found."; fi
+
+stop-qdrant:
+	@echo "Stopping Qdrant server..."
+	docker compose stop qdrant
+	@echo "Qdrant server stopped ✅"
+
+destroy-qdrant:
+	@echo "Stopping and removing Qdrant server..."
+	docker compose stop qdrant
+	docker compose rm -f qdrant
+	@echo "Qdrant server destroyed ✅"
+
+restart-qdrant: destroy-qdrant start-qdrant
+	@echo "Qdrant server restarted ✅"
+
+stop-all:
+	@echo "Stopping all services..."
+	docker compose stop
+	@echo "All services stopped ✅"

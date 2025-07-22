@@ -38,6 +38,17 @@ services:
       - STARTING_URL=https://web.cs.toronto.edu/people/faculty-directory
       - CRAWL_DEPTH=10
   
+  web-client:
+    build:
+      context: ./packages/web-client
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Assuming your web client runs on port 3000
+    depends_on:
+      - qdrant-interactor # Ensure the Python service is ready before starting the web client
+    environment:
+      - CHATBOT_URL=http://chatbot:8000 # URL for the Python service
+  
 # Define the named volume for Qdrant data
 volumes:
   qdrant_data:

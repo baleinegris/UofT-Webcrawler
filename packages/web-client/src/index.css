@@ -68,3 +68,13 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+.Agent{
+  position: relative;
+  left: 0;
+}
+
+.User {
+  position: relative;
+  right: 0;
+}

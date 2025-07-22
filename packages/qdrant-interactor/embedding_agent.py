@@ -34,7 +34,7 @@ def startInteractor(collection_name: str, model="BAAI/bge-small-en") -> bool:
             print(f"Failed to create collection {collection_name}: {e}")
             return False
 
-def addDocument(content: str, source: str, collection_name: str, model="BAAI/bge-small-en") -> bool:
+def addDocument(content: str, title: str, source: str, collection_name: str, model="BAAI/bge-small-en") -> bool:
     """
     Adds a document to the specified collection.
     """
@@ -53,8 +53,10 @@ def addDocument(content: str, source: str, collection_name: str, model="BAAI/bge
         )
     try:
         id = str(uuid.uuid4())
+        full_content = f"{title}\n{content}"
         payload = {
-            "content": content,
+            "content": full_content,
+            "title": title,
             "source": source
         }
         client.upsert(
@@ -63,7 +65,7 @@ def addDocument(content: str, source: str, collection_name: str, model="BAAI/bge
                 models.PointStruct(
                     id=id,
                     payload=payload,
-                    vector=models.Document(text=content, model=model)
+                    vector=models.Document(text=full_content, model=model)
                 ),
             ],
         )
@@ -87,16 +89,18 @@ def queryDatabase(query: str, collection_name: str, limit: int = 10, model="BAAI
             query=models.Document(
                 text=query,
                 model=model
-            )
+            ),
+            limit=limit
         ).points
         query_results = []
         for result in results:
-            query_results.append(QueryResult(
-                id=str(result.id),
-                content=result.payload.get("content") or "",
-                source=result.payload.get("source") or "",
-                score=result.score or 0.0
-            ))
+            if result.score >= 0.7:
+                query_results.append(QueryResult(
+                    id=str(result.id),
+                    content=result.payload.get("content") or "",
+                    source=result.payload.get("source") or "",
+                    score=result.score or 0.0
+                ))
         return QueryResponse(results=query_results)
     except Exception as e:
         print(f"Failed to query collection {collection_name}: {e}")

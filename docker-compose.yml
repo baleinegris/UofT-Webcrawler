@@ -37,7 +37,20 @@ services:
     environment:
       - STARTING_URL=https://web.cs.toronto.edu/people/faculty-directory
       - CRAWL_DEPTH=10
-  
+
+  chatbot:
+    build:
+      context: ./packages/chatbot
+      dockerfile: Dockerfile
+    container_name: chatbot
+    ports:
+      - "8001:8001" # Expose the chatbot service on port 8001
+    depends_on:
+      - qdrant-interactor # Ensure the Python service is ready before starting the chatbot
+    environment:
+      - QDRANT_INTERACTOR_HOST=qdrant-interactor # Use the service name for inter-service communication
+      - QDRANT_PORT=8001 # Port for Qdrant Interactor HTTP API
+
   web-client:
     build:
       context: ./packages/web-client

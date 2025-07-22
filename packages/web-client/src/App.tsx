@@ -16,7 +16,7 @@ function App() {
     const query = {
       query: rawQuery,
     }
-    const response = await fetch('http://localhost:8000/query', {
+    const response = await fetch('http://localhost:8001/query', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

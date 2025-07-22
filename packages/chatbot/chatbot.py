@@ -2,6 +2,8 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
 import os
 from dotenv import load_dotenv
+import requests
+import asyncio
 
 load_dotenv()
 chatbot = None  # Global variable to hold the chatbot instance
@@ -35,7 +37,6 @@ def startChatbot(model_name: str | None = None, temperature: float = 0.7) -> Non
 
 
 
-
 def queryChatbot(query: str):
     """Stream tokens from the chatbot in response to ``query``.
 
@@ -43,9 +44,21 @@ def queryChatbot(query: str):
     function only yields token chunks and records metrics.
     """
     # Create a LangChain agent
+    QDRANT_INTERACTOR_PORT = os.getenv("QDRANT_INTERACTOR_PORT", "8080")
+    QDRANT_INTERACTOR_URL = os.getenv(f"QDRANT_INTERACTOR_URL", f"http://localhost:{QDRANT_INTERACTOR_PORT}/query")
     try:
+        payload = {
+            "query": query,
+            "collection_name": "website_chunks",
+            "limit": 1
+        }
+        results = requests.post(QDRANT_INTERACTOR_URL, json=payload)
+        context = ""
+        for result in results.json()['results']:
+            context += f"{result['content']} "
         messages = [SystemMessage(content=SYSTEM_PROMPT)]
         messages.append(HumanMessage(content=query))
+        messages.append(SystemMessage(content=context))
         for chunk in chatbot.stream(messages):
             if chunk.content:
                 yield chunk.content

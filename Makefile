@@ -5,6 +5,7 @@ start-qdrant:
 dev-start-qdrant-interactor:
 	@echo "Starting development environment..."
 	cd packages/qdrant-interactor && \
+    	. ./.venv/bin/activate && \
 		python main.py
 
 dev-crawl:

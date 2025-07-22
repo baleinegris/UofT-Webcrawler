@@ -24,6 +24,7 @@ var OverlapLength = 100
 
 var (
 	fullDocumentText string // Accumulate all text here
+	pageTitle        string // Store the page title
 	allTextChunks    []PageChunk
 )
 
@@ -36,13 +37,18 @@ func main() {
 			regexp.MustCompile(`^https?://([a-z0-9-]+\.)?(cs\.toronto\.edu|cs\.utoronto\.edu)/.*$`),
 		))
 	c.AllowURLRevisit = false
+	c.OnHTML("title", func(e *colly.HTMLElement) {
+		fmt.Println("Found page title:", e.Text)
+		pageTitle = strings.TrimSpace(e.Text)
+	})
+	
 	c.OnHTML("body", func(e *colly.HTMLElement) {
 		fullDocumentText = ""         // Reset for each page
 		traverseDOMForFullText(e.DOM) // Extract all text from the page
 	})
 
 	c.OnScraped(func(r *colly.Response) {
-		chunkTextByLength(fullDocumentText, r.Request.URL.String()) // Pass URL for tracking
+		chunkTextByLength(fullDocumentText, r.Request.URL.String(), pageTitle) // Pass URL and title for tracking
 		fmt.Printf("Chunked syllabus: %s - created %d chunks\n",
 			r.Request.URL.String(), len(allTextChunks))
 	})
@@ -50,6 +56,7 @@ func main() {
 	c.OnHTML("a[href]", handleLink)
 	c.OnRequest(func(r *colly.Request) {
 		fmt.Println("Visiting:", r.URL.String())
+		pageTitle = "" // Reset title for each new page
 		links++
 	})
 
@@ -77,9 +84,12 @@ func main() {
 		payload := map[string]interface{}{
 			"content":         chunk.Content,
 			"url":             chunk.URL,
+			"title":           chunk.Title,
 			"position":        i,
 			"collection_name": "website_chunks", // Add the required collection_name field
 		}
+
+		fmt.Printf("Sending chunk %d: %s\n", i, chunk.Title)
 
 		jsonData, err := json.Marshal(payload)
 		if err != nil {
@@ -87,7 +97,7 @@ func main() {
 			continue
 		}
 
-		resp, err := http.Post("http://localhost:8000/add_embedding", "application/json", strings.NewReader(string(jsonData)))
+		resp, err := http.Post("http://localhost:8080/add_embedding", "application/json", strings.NewReader(string(jsonData)))
 		if err != nil {
 			fmt.Printf("Error sending chunk %d to server: %v\n", i, err)
 			continue
@@ -116,7 +126,7 @@ func handleLink(e *colly.HTMLElement) {
 	e.Request.Visit(absoluteURL)
 }
 
-func chunkTextByLength(text string, url string) {
+func chunkTextByLength(text string, url string, title string) {
 	if text == "" {
 		return
 	}
@@ -128,7 +138,7 @@ func chunkTextByLength(text string, url string) {
 		}
 
 		chunkContent := text[i:end]
-		allTextChunks = append(allTextChunks, PageChunk{Content: chunkContent, URL: url})
+		allTextChunks = append(allTextChunks, PageChunk{Content: chunkContent, URL: url, Title: title})
 
 		// Move the starting point for the next chunk
 		if end == len(text) {

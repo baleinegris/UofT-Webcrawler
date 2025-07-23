@@ -8,6 +8,18 @@ dev-start-qdrant-interactor:
     	. ./.venv/bin/activate && \
 		python main.py
 
+dev-start-chatbot:
+	@echo "Starting chatbot development environment..."
+	cd packages/chatbot && \
+    	. ./.venv/bin/activate && \
+		python main.py
+
+dev-start-web-client:
+	@echo "Starting web client development environment..."
+	cd packages/web-client && \
+		npm install && \
+		npm run dev
+
 dev-crawl:
 	@echo "Starting web crawler development environment..."
 	cd packages/web-crawler && \
@@ -49,3 +61,25 @@ stop-all:
 	@echo "Stopping all services..."
 	docker compose stop
 	@echo "All services stopped ✅"
+
+dev-start-all:
+	@echo "Starting all development environments in parallel..."
+	@trap 'echo "Stopping all services..."; kill 0; exit' INT; \
+	(cd packages/qdrant-interactor && . ./.venv/bin/activate && python main.py) & \
+	PID1=$$!; \
+	(cd packages/chatbot && . ./.venv/bin/activate && python main.py) & \
+	PID2=$$!; \
+	(cd packages/web-client && npm install && npm run dev) & \
+	PID3=$$!; \
+	echo "All services started in background ✅"; \
+	echo "PIDs: Qdrant-Interactor=$$PID1, Chatbot=$$PID2, Web-Client=$$PID3"; \
+	echo "Press Ctrl+C to stop all services"; \
+	wait
+
+dev-stop-all:
+	@echo "Stopping all development services..."
+	@pkill -f "python.*qdrant-interactor.*main.py" || echo "Qdrant Interactor not running"
+	@pkill -f "python.*chatbot.*main.py" || echo "Chatbot not running"
+	@pkill -f "npm.*run.*dev" || echo "Web Client not running"
+	@pkill -f "node.*vite" || echo "Vite dev server not running"
+	@echo "All development services stopped ✅"

@@ -31,7 +31,7 @@ var (
 func main() {
 	links := 0
 	c := colly.NewCollector(
-		colly.MaxDepth(2),
+		colly.MaxDepth(3),
 		colly.Async(true),
 		colly.URLFilters(
 			regexp.MustCompile(`^https?://([a-z0-9-]+\.)?(cs\.toronto\.edu|cs\.utoronto\.edu)/.*$`),
@@ -41,16 +41,57 @@ func main() {
 		fmt.Println("Found page title:", e.Text)
 		pageTitle = strings.TrimSpace(e.Text)
 	})
-	
+
 	c.OnHTML("body", func(e *colly.HTMLElement) {
 		fullDocumentText = ""         // Reset for each page
 		traverseDOMForFullText(e.DOM) // Extract all text from the page
 	})
 
 	c.OnScraped(func(r *colly.Response) {
+		if fullDocumentText == "" {
+			return // Skip if no content
+		}
+
+		oldChunkCount := len(allTextChunks)
 		chunkTextByLength(fullDocumentText, r.Request.URL.String(), pageTitle) // Pass URL and title for tracking
-		fmt.Printf("Chunked syllabus: %s - created %d chunks\n",
-			r.Request.URL.String(), len(allTextChunks))
+		newChunkCount := len(allTextChunks)
+
+		fmt.Printf("Chunked page: %s - created %d new chunks (total: %d)\n",
+			r.Request.URL.String(), newChunkCount-oldChunkCount, newChunkCount)
+
+		for i := oldChunkCount; i < newChunkCount; i++ {
+			chunk := allTextChunks[i]
+			payload := map[string]interface{}{
+				"content":         chunk.Content,
+				"url":             chunk.URL,
+				"title":           chunk.Title,
+				"position":        i, // Position in the chunk list
+				"collection_name": "website_chunks",
+			}
+
+			fmt.Printf("Sending chunk %d: %s\n", i, chunk.Title)
+
+			jsonData, err := json.Marshal(payload)
+			if err != nil {
+				fmt.Printf("Error marshaling chunk %d: %v\n", i, err)
+				continue
+			}
+
+			resp, err := http.Post("http://localhost:8080/add_embedding", "application/json", strings.NewReader(string(jsonData)))
+			if err != nil {
+				fmt.Printf("Error sending chunk %d to server: %v\n", i, err)
+				continue
+			}
+
+			if resp.StatusCode != 200 {
+				fmt.Printf("Server returned error for chunk %d: Status %d\n", i, resp.StatusCode)
+			} else {
+				fmt.Printf("Successfully sent chunk %d\n", i)
+			}
+
+			resp.Body.Close()
+			time.Sleep(100 * time.Millisecond) // Rate limiting
+		}
 	})
 
 	c.OnHTML("a[href]", handleLink)
@@ -77,47 +118,7 @@ func main() {
 		fmt.Printf("Error saving chunks: %v\n", err)
 	}
 
-	fmt.Printf("Sending %d chunks to vector database...\n", len(allTextChunks))
-	successCount := 0
-
-	for i, chunk := range allTextChunks {
-		payload := map[string]interface{}{
-			"content":         chunk.Content,
-			"url":             chunk.URL,
-			"title":           chunk.Title,
-			"position":        i,
-			"collection_name": "website_chunks", // Add the required collection_name field
-		}
-
-		fmt.Printf("Sending chunk %d: %s\n", i, chunk.Title)
-
-		jsonData, err := json.Marshal(payload)
-		if err != nil {
-			fmt.Printf("Error marshaling chunk %d: %v\n", i, err)
-			continue
-		}
-
-		resp, err := http.Post("http://localhost:8080/add_embedding", "application/json", strings.NewReader(string(jsonData)))
-		if err != nil {
-			fmt.Printf("Error sending chunk %d to server: %v\n", i, err)
-			continue
-		}
-
-		// Check response status
-		if resp.StatusCode != 200 {
-			fmt.Printf("Server returned error for chunk %d: Status %d\n", i, resp.StatusCode)
-		} else {
-			successCount++
-		}
-
-		resp.Body.Close()
-
-		// Add delay or server will be overwhelmed
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	fmt.Printf("Successfully sent %d out of %d chunks to vector database\n", successCount, len(allTextChunks))
-
+	fmt.Println("All chunks have been sent to vector database in real-time.")
 }
 
 func handleLink(e *colly.HTMLElement) {

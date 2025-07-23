@@ -3,6 +3,9 @@
 <p>This project aims to crawl UofT websites, and vector embed chunks of text using Qdrant. The project will have a web user interface and a REST API allowing users to search the database for relevant information. (eg: user searches "Bayesian Networks" and gets classes and programs related to Bayesian Networks).</p>
 <p>The project operates with a microservices architecture, with packages Dockerized and orchestrated with Docker Compose. All commands are handled with GNU Make.</p>
 
+## Qdrant Database visualization 
+<img src="./Visualization.png">
+
 ## 📁 Project Structure
 
 ```

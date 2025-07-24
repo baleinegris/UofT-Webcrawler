@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile            # Assuming you'll have a Dockerfile here
     container_name: qdrant-interactor
     ports:
-      - "8000:8000" # Or 50051:50051 if using gRPC
+      - "9000:9000" # Or 50051:50051 if using gRPC
     depends_on:
       - qdrant # Ensure Qdrant starts before the Python service
     environment:
@@ -43,11 +43,11 @@ services:
       dockerfile: Dockerfile
     container_name: chatbot
     ports:
-      - "8001:8001" # Expose the chatbot service on port 8001
+      - "9001:9001" # Expose the chatbot service on port 9001
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the chatbot
     environment:
-      - QDRANT_INTERACTOR_URL=http://qdrant-interactor:8000
+      - QDRANT_INTERACTOR_URL=http://qdrant-interactor:9000
       - OPENAI_API_KEY=${OPENAI_API_KEY}
 
 
@@ -61,7 +61,7 @@ services:
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the web client
     environment:
-      - CHATBOT_URL=http://chatbot:8001 # URL for the Python service
+      - CHATBOT_URL=http://chatbot:9001 # URL for the Python service
 
 # Define the named volume for Qdrant data
 volumes:

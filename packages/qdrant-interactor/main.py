@@ -46,4 +46,4 @@ async def query(request: QueryRequest) -> QueryResponse:
 if __name__ == "__main__":
     import uvicorn
     startInteractor(collection_name="test_collection")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=9000)

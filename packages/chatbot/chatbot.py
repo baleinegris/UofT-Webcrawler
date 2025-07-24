@@ -44,9 +44,8 @@ def queryChatbot(query: str):
     function only yields token chunks and records metrics.
     """
     # Create a LangChain agent
-    QDRANT_INTERACTOR_PORT = os.getenv("QDRANT_INTERACTOR_PORT", "8080")
-    QDRANT_INTERACTOR_URL = os.getenv(f"QDRANT_INTERACTOR_URL", f"http://localhost:{QDRANT_INTERACTOR_PORT}/query")
-    FULL_ADDRESS = f"{QDRANT_INTERACTOR_URL}:{QDRANT_INTERACTOR_PORT}/query"
+    QDRANT_INTERACTOR_URL = os.getenv("QDRANT_INTERACTOR_URL", "http://localhost:8000")
+    FULL_ADDRESS = f"{QDRANT_INTERACTOR_URL}/query"
     try:
         payload = {
             "query": query,

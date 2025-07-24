@@ -16,7 +16,8 @@ function App() {
     const query = {
       query: rawQuery,
     }
-    const response = await fetch('http://localhost:8001/query', {
+    const CHATBOT_URL = import.meta.env.VITE_CHATBOT_URL || 'http://localhost:9001/query';
+    const response = await fetch(CHATBOT_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

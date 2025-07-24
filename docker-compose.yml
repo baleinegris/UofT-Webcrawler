@@ -57,11 +57,11 @@ services:
       context: ./packages/web-client
       dockerfile: Dockerfile
     ports:
-      - "8080:80"  # Map host port 8080 to container port 80 (Nginx default)
+      - "9090:80"  # Map host port 8080 to container port 80 (Nginx default)
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the web client
     environment:
-      - CHATBOT_URL=http://chatbot:9001 # URL for the Python service
+      - VITE_CHATBOT_URL=http://chatbot:9001 # URL for the Python service
 
 # Define the named volume for Qdrant data
 volumes:

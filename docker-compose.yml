@@ -31,6 +31,7 @@ services:
     # - EMBEDDING_CONCURRENCY=5
 
   web-crawler:
+    image: web-crawler:latest
     build:
       context: ./packages/web-crawler
       dockerfile: Dockerfile
@@ -39,6 +40,7 @@ services:
       - CRAWL_DEPTH=10
 
   chatbot:
+    image: chatbot:latest
     build:
       context: ./packages/chatbot
       dockerfile: Dockerfile
@@ -48,10 +50,11 @@ services:
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the chatbot
     environment:
-      - QDRANT_INTERACTOR_HOST=qdrant-interactor # Use the service name for inter-service communication
-      - QDRANT_PORT=8001 # Port for Qdrant Interactor HTTP API
+      - QDRANT_INTERACTOR_URL=http://qdrant-interactor # Use the service name for inter-service communication
+      - QDRANT_PORT=8000 # Port for qdrant-interactor
 
   web-client:
+    image: web-client:latest
     build:
       context: ./packages/web-client
       dockerfile: Dockerfile
@@ -61,7 +64,7 @@ services:
       - qdrant-interactor # Ensure the Python service is ready before starting the web client
     environment:
       - CHATBOT_URL=http://chatbot:8001 # URL for the Python service
-  
+
 # Define the named volume for Qdrant data
 volumes:
   qdrant_data:

@@ -46,13 +46,14 @@ def queryChatbot(query: str):
     # Create a LangChain agent
     QDRANT_INTERACTOR_PORT = os.getenv("QDRANT_INTERACTOR_PORT", "8080")
     QDRANT_INTERACTOR_URL = os.getenv(f"QDRANT_INTERACTOR_URL", f"http://localhost:{QDRANT_INTERACTOR_PORT}/query")
+    FULL_ADDRESS = f"{QDRANT_INTERACTOR_URL}:{QDRANT_INTERACTOR_PORT}/query"
     try:
         payload = {
             "query": query,
             "collection_name": "website_chunks",
             "limit": 5
         }
-        results = requests.post(QDRANT_INTERACTOR_URL, json=payload)
+        results = requests.post(FULL_ADDRESS, json=payload)
         context = ""
         for result in results.json()['results']:
             context += f"{result['content']} "

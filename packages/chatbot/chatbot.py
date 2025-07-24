@@ -50,7 +50,7 @@ def queryChatbot(query: str):
         payload = {
             "query": query,
             "collection_name": "website_chunks",
-            "limit": 1
+            "limit": 5
         }
         results = requests.post(QDRANT_INTERACTOR_URL, json=payload)
         context = ""

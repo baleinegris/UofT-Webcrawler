@@ -2,7 +2,6 @@ import { MessageSchema } from "../schemas/Message";
 
 export default function Message( { message }: { message: MessageSchema } ) {
   const isUser = message.role.toLowerCase() === 'user';
-  const isAgent = message.role.toLowerCase() === 'agent';
   
   return (
     <div className={`flex mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}>

@@ -63,7 +63,5 @@ services:
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the web client
 
-# Define the named volume for Qdrant data
-volumes:
-  qdrant_data:
-    # driver: local # Default driver, explicitly stating it
+# Note: Using bind mount for qdrant_storage instead of named volumes
+# This allows easy data transfer between different machines

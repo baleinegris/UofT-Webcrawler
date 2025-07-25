@@ -30,8 +30,13 @@ async def startup_event():
 async def query(request: QueryRequest):
     return StreamingResponse(
         queryChatbot(request.query),
-        media_type="text/event-stream",
-        )
+        media_type="text/plain",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # Disable Nginx buffering
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn

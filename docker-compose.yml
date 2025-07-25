@@ -61,7 +61,7 @@ services:
     depends_on:
       - qdrant-interactor # Ensure the Python service is ready before starting the web client
     environment:
-      - VITE_CHATBOT_URL=https://web-crawler-chatbot.baleinegris.site/ # URL for the Python service
+      - VITE_CHATBOT_URL=https://web-crawler-chatbot.baleinegris.site/query # URL for the Python service
 
 # Define the named volume for Qdrant data
 volumes:

@@ -13,6 +13,10 @@ RUN npm install
 # Copy everything to the container
 COPY . .
 
+# Accept build argument for chatbot URL
+ARG VITE_CHATBOT_URL
+ENV VITE_CHATBOT_URL=$VITE_CHATBOT_URL
+
 # Build app for production
 RUN npm run build
 

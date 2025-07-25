@@ -6,7 +6,7 @@ services:
       - "6333:6333" # HTTP API
       - "6334:6334" # gRPC API
     volumes: 
-      - qdrant_data:/qdrant/storage # For persistent storage
+      - ./qdrant_storage:/qdrant/storage # Bind mount to local directory
     restart: unless-stopped # Ensure Qdrant restarts if it crashes
 
   qdrant-interactor:

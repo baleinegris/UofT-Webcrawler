@@ -4,8 +4,9 @@
 <p>The project operates with a microservices architecture, with packages Dockerized and orchestrated with Docker Compose. All commands are handled with GNU Make.</p>
 
 ## The first release is out now at [https://chat.cs.baleinegris.site/](https://chat.cs.baleinegris.site/)
-## Qdrant Database visualization 
-<img src="./Visualization.png">
+
+## Project at a glance:
+<img src="./Chat Cs diagram.png">
 
 ## 📁 Project Structure
 
@@ -60,6 +61,12 @@ UofT-Webcrawler/
   - `6333`: HTTP API for vector operations
   - `6334`: gRPC API (alternative interface)
 - **Storage**: Persistent volume for database state
+
+
+
+## Qdrant Database visualization 
+<img src="./Visualization.png">
+
 
 ### 2. 🐍 Qdrant Interactor (Python FastAPI)
 - **Purpose**: REST API service for vector embedding and search operations
